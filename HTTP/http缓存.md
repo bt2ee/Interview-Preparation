@@ -47,3 +47,12 @@
 这个时候，利用 ETag 能更加精准的控制缓存，因为 ETag 是服务器自动生成的资源在服务器端的唯一标识符，资源每次变动，都会生成新的 ETag 值。Last-Modified 与 ETag 是可以一起使用的，但服务器会优先验证 ETag。
 
 > ETag 优先级大于 Last-Modified
+
+### 启发式缓存
+如果一个可以缓存的请求没有设置 Expires 和 Cache-Control，但是响应头有设置 Last-Modified 信息，这个时候浏览器默认进行启发式缓存：（当前时间 - last-modified)*10%
+
+### from disk cache 和 from memory cache
+memory cache 内存缓存，主要包含当前页面中已经抓取到的资源：样式，脚本，图片；一旦关闭 Tab 页面，内存中的缓存就会释放。
+disk cache 硬盘缓存。
+- 对于大文件来说，大概率不会存在内存中，反之优先
+- 当前系统内存使用率过高，文件优先存进硬盘
