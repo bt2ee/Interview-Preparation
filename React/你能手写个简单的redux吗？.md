@@ -49,3 +49,8 @@ function compose(middlewares) {
 
 
 redux-thunk 和 redux-saga 处理异步任务的时机不一样。对于 redux-saga，相对于在 redux 的 action 基础上，重新开辟了一个 async action 的分支，单独处理异步任务
+
+### 三大原则
+- 单一数据源
+- state 只读
+- 纯函数修改

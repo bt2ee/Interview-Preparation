@@ -1,0 +1,2 @@
+- interface 是通过继承的方式来扩展，type 是通过 & 来扩展。
+- interface 可以自动合并，而 type 不行
