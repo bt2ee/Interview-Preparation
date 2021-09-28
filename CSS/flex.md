@@ -1,6 +1,6 @@
 #### Flexible box 弹性布局
 
-> flex item是布局中的每一项即项目。
+> flex item 是布局中的每一项即项目。
 
 - flex-direction: 项目的排列方式
 - flex-wrap: 项目排列满屏是否换行

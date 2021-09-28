@@ -5,7 +5,7 @@ diff 操作本身也会带来性能损耗，将前后两棵树完全比对的算
 #### react 优化
 - 同级元素进行 diff，如果跨越了层级，React 将不会尝试复用
 - 不同类型的元素会产生不同的树。如果元素由 div 变成了 p，React 会销毁 div 及其子孙节点，新建 p 及其子孙节点
-- 可以通过 tag、key 来判断元素在不同的渲染下保持稳定
+- 可以通过 type、key 来判断元素在不同的渲染下保持稳定
 
 #### diff 分为两类
 - 当 newChild 类型为 object、number、string，代表同级只有一个节点
@@ -26,7 +26,7 @@ diff 操作本身也会带来性能损耗，将前后两棵树完全比对的算
 **第一次遍历**
 - key 不同，遍历结束
 - newChildren 或者 oldFiber 遍历完，遍历结束
-- key 相同 tag 不同，标记 oldFiber 为 DELETION
+- key 相同 type 不同，标记 oldFiber 为 DELETION
 - key 相同 type 相同，标记可以复用
 
 > newChildren 遍历完，oldFiber 没遍历完，在第一次遍历后将 oldFiber 中没遍历完的节点标记 DELETION（即删除的 DELETION Tag）

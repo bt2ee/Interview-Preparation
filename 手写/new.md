@@ -7,7 +7,7 @@
 function myNew (context, ...arg) {
   let obj = Object.create(null);
   obj.__proto__ = context.prototype;
-  let res = context.apply(obj, arg);
+  let res = context.apply(obj, ...arg);
   return typeof res === 'object' ? res : obj;
 }
 ```
