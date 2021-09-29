@@ -25,3 +25,5 @@
 - 引入了 ahooks，你们有自定义 hook 吗
 - 为什么不用 qiankun 自带的 globalstate
 （没有使用 globalstate 是因为我们希望对子应用接入影响最小。）
+- 你们有自己的组件库，是怎么做的？
+-
