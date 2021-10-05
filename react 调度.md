@@ -36,14 +36,14 @@ setTimeout 最后的时间间隔会变为 4ms。
 两个条件：可以主动让出主线程，让浏览器去渲染视图。一次事件循环只执行一次，因为执行一个后，还会请求下一次的时间片。
 
 #### 简述一下调度流程？
-Scheduler 主要处理任务调度的职责。你只需要将任务和任务优先级交给它，它就可以帮你管理任务。
-首先 react 通过 `scheduleCallback`、`scheduleSyncCallback` 发起任务调度，不同点在于 `scheduleSyncCallback` 传递的是最高优先级的任务，`scheduleCallback` 传入通过 lane 计算后的优先级任务。通过计算当前时间与过期时间（过期时间 = 任务开始时间 + 优先级时间）来判断任务是否过期。
-优先级在 react 中分为 Immediate -1，立即执行；UserBlock 250ms 一般指用户交互；Normal 5000ms 不需要直观立即变化的任务，比如网络请求；Low 10000ms 肯定执行的任务，但是可以放在最后处理；Idle 没必要的任务，一般不执行。
-通过当前时间和过期时间的比较来放入 timeQueue (未过期队列)和 taskQueue（过期任务队列），当 开始时间 > 当前时间，说明没有过期，放入 timerQueue，当 开始时间 <= 当前时间，说明过期，存入 taskQueue。
-针对未过期任务，会调用 `requestHostTimeout` 通过使用 `setTimeout` 指定延时时间，到期后通过`advanceTimers` 转移到 taskQueue 中，如果此时没有调度则调用 `requestHostCallback` 发起调度。
-调度时，通过 messageChannel 的 port 发送消息，执行 channel.port 的监听函数 `performWorkUntilDeadline`（**ps: 这部分还没有理清楚**）
-`performWorkUntilDeadline` 内部会执行 `scheduledHostCallback`，内部真正在进行调度的是 `workLoop` 函数，当没有剩余时间或者应该让出主线程的时候，`workLoop` 将会中断 while 循环，通过 `return false` 告知 `performWorkUntilDeadline` 调度停止。
-当任务被打断之后，`performWorkUntilDeadline` 会再让调度者调用一个执行者，继续执行这个任务，直到任务完成，eventLoop 只是简单的执行任务，并不能直接判断任务是否完成，需要通过任务函数返回值来判断，任务函数返回值是函数，需要继续调用任务函数，否则代表任务完成。
+- Scheduler 主要处理任务调度的职责。你只需要将任务和任务优先级交给它，它就可以帮你管理任务。
+- 首先 react 通过 `scheduleCallback`、`scheduleSyncCallback` 发起任务调度，不同点在于 `scheduleSyncCallback` 传递的是最高优先级的任务，`scheduleCallback` 传入通过 lane 计算后的优先级任务。通过计算当前时间与过期时间（过期时间 = 任务开始时间 + 优先级时间）来判断任务是否过期。
+- 优先级在 react 中分为 Immediate -1，立即执行；UserBlock 250ms 一般指用户交互；Normal 5000ms 不需要直观立即变化的任务，比如网络请求；Low 10000ms 肯定执行的任务，但是可以放在最后处理；Idle 没必要的任务，一般不执行。
+- 通过当前时间和过期时间的比较来放入 timeQueue (未过期队列)和 taskQueue（过期任务队列），当 开始时间 > 当前时间，说明没有过期，放入 timerQueue，当 开始时间 <= 当前时间，说明过期，存入 taskQueue。
+- 针对未过期任务，会调用 `requestHostTimeout` 通过使用 `setTimeout` 指定延时时间，到期后通过`advanceTimers` 转移到 taskQueue 中，如果此时没有调度则调用 `requestHostCallback` 发起调度。
+- 调度时，通过 messageChannel 的 port 发送消息，执行 channel.port 的监听函数 `performWorkUntilDeadline`（**ps: 这部分还没有理清楚**）
+- `performWorkUntilDeadline` 内部会执行 `scheduledHostCallback`，内部真正在进行调度的是 `workLoop` 函数，当没有剩余时间或者应该让出主线程的时候，`workLoop` 将会中断 while 循环，通过 `return false` 告知 `performWorkUntilDeadline` 调度停止。
+- 当任务被打断之后，`performWorkUntilDeadline` 会再让调度者调用一个执行者，继续执行这个任务，直到任务完成，eventLoop 只是简单的执行任务，并不能直接判断任务是否完成，需要通过任务函数返回值来判断，任务函数返回值是函数，需要继续调用任务函数，否则代表任务完成。
 
 如何取消任务调度？设置 callback 为 null 就能取消任务调度
 
