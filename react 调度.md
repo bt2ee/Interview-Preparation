@@ -15,7 +15,6 @@ react 异步更新的任务就是通过类似 requestIdleCallback 去向浏览�
 - taskQueue，里面存的都是过期的任务，依据任务的过期时间( expirationTime ) 排序，需要在调度的 workLoop 中循环执行完这些任务。
 - timerQueue 里面存的都是没有过期的任务，依据任务的开始时间( startTime )排序，在调度 workLoop 中会用 advanceTimers 检查任务是否过期，如果过期了，放入 taskQueue 队列。
 
-
 #### 优先级
 React 为了防止 requestIdleCallback 中的任务由于浏览器没有空闲时间而卡死，所以设置了 5 个优先级。
 - Immediate -1 需要立刻执行
@@ -40,10 +39,14 @@ setTimeout 最后的时间间隔会变为 4ms。
 - 首先 react 通过 `scheduleCallback`、`scheduleSyncCallback` 发起任务调度，不同点在于 `scheduleSyncCallback` 传递的是最高优先级的任务，`scheduleCallback` 传入通过 lane 计算后的优先级任务。通过计算当前时间与过期时间（过期时间 = 任务开始时间 + 优先级时间）来判断任务是否过期。
 - 优先级在 react 中分为 Immediate -1，立即执行；UserBlock 250ms 一般指用户交互；Normal 5000ms 不需要直观立即变化的任务，比如网络请求；Low 10000ms 肯定执行的任务，但是可以放在最后处理；Idle 没必要的任务，一般不执行。
 - 通过当前时间和过期时间的比较来放入 timeQueue (未过期队列)和 taskQueue（过期任务队列），当 开始时间 > 当前时间，说明没有过期，放入 timerQueue，当 开始时间 <= 当前时间，说明过期，存入 taskQueue。
+- 针对已过期任务，在将它放入 `taskQueue` 之后，调用 `requestHostCallback`，让调度者调度一个执行者去执行任务，也就意味着调度流程开始。
 - 针对未过期任务，会调用 `requestHostTimeout` 通过使用 `setTimeout` 指定延时时间，到期后通过`advanceTimers` 转移到 taskQueue 中，如果此时没有调度则调用 `requestHostCallback` 发起调度。
-- 调度时，通过 messageChannel 的 port 发送消息，执行 channel.port 的监听函数 `performWorkUntilDeadline`（**ps: 这部分还没有理清楚**）
-- `performWorkUntilDeadline` 内部会执行 `scheduledHostCallback`，内部真正在进行调度的是 `workLoop` 函数，当没有剩余时间或者应该让出主线程的时候，`workLoop` 将会中断 while 循环，通过 `return false` 告知 `performWorkUntilDeadline` 调度停止。
+- 调度时，通过 messageChannel 的 port 发送消息，执行 channel.port1 的监听函数 `performWorkUntilDeadline` 去清空队列。
+- `performWorkUntilDeadline` 内部会执行 `scheduledHostCallback`，内部真正在进行调度的是 `workLoop` 函数，每隔5ms将会去检查时间切片是否到期，当没有剩余时间或者应该让出主线程的时候，`workLoop` 将会中断 while 循环，通过 `return false` 告知 `performWorkUntilDeadline` 调度停止。
 - 当任务被打断之后，`performWorkUntilDeadline` 会再让调度者调用一个执行者，继续执行这个任务，直到任务完成，eventLoop 只是简单的执行任务，并不能直接判断任务是否完成，需要通过任务函数返回值来判断，任务函数返回值是函数，需要继续调用任务函数，否则代表任务完成。
+- 执行完后，开始进入更新 DOM 的流程。
+
+目前的时间切片长度是 5ms `yieldInterval = 5`
 
 如何取消任务调度？设置 callback 为 null 就能取消任务调度
 
@@ -51,4 +54,10 @@ setTimeout 最后的时间间隔会变为 4ms。
 #### 问题
 - messageChannel 具体怎么处理的
 - 中断掉的任务怎么保存的
+执行高优先级时，工作中fiber树已经被更新，所以恢复低优先级任务一定是重新完整执行一遍。
+
 - 中断掉的任务怎么恢复的
+
+
+- [https://segmentfault.com/a/1190000039101758](https://segmentfault.com/a/1190000039101758)
+- [彻底搞懂React源码调度原理](https://segmentfault.com/a/1190000022606323?utm_source=sf-similar-article)
