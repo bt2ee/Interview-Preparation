@@ -1,6 +1,6 @@
 javascript 是一门单线程语言，为了防止有些任务耗时太长阻塞任务队列，就有了事件循环，事件循环是 js 实现异步的一种方法，也是 js 的执行机制
 
-对于任务划分为 宏任务和微任务。
+对于异步任务划分为 宏任务和微任务。
 - 宏任务：整体代码 script、setTimeout、setInterval
 - 微任务：Promise、process.nextTick
 
